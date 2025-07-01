@@ -1,10 +1,10 @@
-def stream_users_in_batches(batch_size):
+def streamusersinbatches(batchsize):
     """
-    Yield batches of users of size batch_size from an in-memory data list.
-    Raises ValueError if batch_size is invalid.
+    Yield batches of users of size batchsize from an in-memory data list.
+    Raises ValueError if batchsize is invalid.
     """
-    if not isinstance(batch_size, int) or batch_size <= 0:
-        raise ValueError("batch_size must be a positive integer")
+    if not isinstance(batchsize, int) or batchsize <= 0:
+        raise ValueError("batchsize must be a positive integer")
 
     user_data = [
         {'user_id': '001', 'name': 'Alice', 'email': 'alice@example.com', 'age': 23},
@@ -12,35 +12,35 @@ def stream_users_in_batches(batch_size):
         {'user_id': '003', 'name': 'Charlie', 'email': 'charlie@example.com', 'age': 26},
         {'user_id': '004', 'name': 'Diana', 'email': 'diana@example.com', 'age': 24},
         {'user_id': '005', 'name': 'Eve', 'email': 'eve@example.com', 'age': 40},
-        # add more users as needed
+        # Add more users if needed
     ]
 
     batch = []
     for user in user_data:
         batch.append(user)
-        if len(batch) == batch_size:
+        if len(batch) == batchsize:
             yield batch
             batch = []
     if batch:
         yield batch
 
 
-def batch_processing(batch_size):
+def batch_processing(batchsize):
     """
-    Process each batch from stream_users_in_batches.
+    Process each batch from streamusersinbatches.
     Yield individual users over the age of 25.
-    Raises ValueError if batch_size is invalid.
+    Raises ValueError if batchsize is invalid.
     """
-    if not isinstance(batch_size, int) or batch_size <= 0:
-        raise ValueError("batch_size must be a positive integer")
+    if not isinstance(batchsize, int) or batchsize <= 0:
+        raise ValueError("batchsize must be a positive integer")
 
-    for batch in stream_users_in_batches(batch_size):
+    for batch in streamusersinbatches(batchsize):
         for user in batch:
             if user['age'] > 25:
                 yield user
 
 
-# Example usage:
+# Example usage
 if __name__ == "__main__":
     for user in batch_processing(2):
         print(user)
