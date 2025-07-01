@@ -1,5 +1,15 @@
-def stream_users_in_batches(batch_size):
-    """Yield users in batches of specified size."""
+import sys
+from typing import Generator, List, Dict
+
+def stream_users_in_batches(batch_size: int) -> Generator[List[Dict[str, object]], None, None]:
+    """Stream users in batches using a generator.
+    
+    Args:
+        batch_size: Number of users per batch
+        
+    Yields:
+        Lists of user dictionaries in batches
+    """
     user_data = [
         {'user_id': '00234e50-34eb-4ce2-94ec-26e3fa749796', 'name': 'Dan Altenwerth Jr.', 'email': 'Molly59@gmail.com', 'age': 67},
         {'user_id': '006bfede-724d-4cdd-a2a6-59700f40d0da', 'name': 'Glenda Wisozk', 'email': 'Miriam21@gmail.com', 'age': 119},
@@ -10,9 +20,19 @@ def stream_users_in_batches(batch_size):
     for i in range(0, len(user_data), batch_size):
         yield user_data[i:i + batch_size]
 
-def batch_processing(batch_size):
-    """Process each batch to filter users over the age of 25."""
+def batch_processing(batch_size: int) -> None:
+    """Process batches of users and filter those over age 25.
+    
+    Args:
+        batch_size: Number of users per batch to process
+    """
     for batch in stream_users_in_batches(batch_size):
-        for user in batch:
-            if user['age'] > 25:
+        for user in (u for u in batch if u['age'] > 25):
+            try:
                 print(user)
+            except BrokenPipeError:
+                sys.stderr.close()
+                break
+
+if __name__ == "__main__":
+    batch_processing(50)
