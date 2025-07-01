@@ -1,4 +1,4 @@
-def streamusersinbatches(batchsize):
+def stream_users_in_batches(batchsize):
     """
     Yield batches of users of size batchsize from an in-memory data list.
     Raises ValueError if batchsize is invalid.
@@ -27,14 +27,14 @@ def streamusersinbatches(batchsize):
 
 def batch_processing(batchsize):
     """
-    Process each batch from streamusersinbatches.
+    Process each batch from stream_users_in_batches.
     Yield individual users over the age of 25.
     Raises ValueError if batchsize is invalid.
     """
     if not isinstance(batchsize, int) or batchsize <= 0:
         raise ValueError("batchsize must be a positive integer")
 
-    for batch in streamusersinbatches(batchsize):
+    for batch in stream_users_in_batches(batchsize):
         for user in batch:
             if user['age'] > 25:
                 yield user
