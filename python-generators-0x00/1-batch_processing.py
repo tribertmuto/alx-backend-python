@@ -7,8 +7,8 @@ def streamusersinbatches(batchsize):
     if not isinstance(batchsize, int) or batchsize <= 0:
         raise ValueError("batchsize must be a positive integer")
 
-    # In-memory user data simulating a data source
-    all_users = [
+    # In-memory user data
+    users = [
         {'user_id': '001', 'name': 'Alice', 'email': 'alice@example.com', 'age': 23},
         {'user_id': '002', 'name': 'Bob', 'email': 'bob@example.com', 'age': 30},
         {'user_id': '003', 'name': 'Charlie', 'email': 'charlie@example.com', 'age': 26},
@@ -17,21 +17,20 @@ def streamusersinbatches(batchsize):
     ]
 
     current_batch = []
-    for user in all_users:
+    for user in users:
         current_batch.append(user)
         if len(current_batch) == batchsize:
             yield current_batch
             current_batch = []
     
-    # Yield any remaining users in partial batch
     if current_batch:
         yield current_batch
 
 
 def batch_processing(batchsize):
     """
-    Processes user batches and yields individual users over age 25
-    Raises ValueError if batchsize is invalid
+    Processes user batches from streamusersinbatches()
+    Yields individual users over age 25
     """
     if not isinstance(batchsize, int) or batchsize <= 0:
         raise ValueError("batchsize must be a positive integer")
@@ -42,8 +41,7 @@ def batch_processing(batchsize):
                 yield user
 
 
-# Example usage
 if __name__ == "__main__":
-    # Process in batches of 2 and print users over 25
-    for user in batch_processing(2):
-        print(f"Matched user: {user['name']} (age: {user['age']})")
+    # Example usage with batch size of 2
+    for result in batch_processing(2):
+        print(result)
