@@ -2,8 +2,8 @@
 import json
 
 def stream_users_in_batches(batch_size):
-    """Generator that yields users in batches without database queries"""
-    # Simulated user data (would come from file/API in real implementation)
+    """Generator that yields users in batches without database queries."""
+    # Simulated user data (this would typically come from a database or file)
     users = [
         {"user_id": "00234e50-34eb-4ce2-94ec-26e3fa749796", "name": "Dan Altenwerth Jr.", "email": "Molly59@gmail.com", "age": 67},
         {"user_id": "006bfede-724d-4cdd-a2a6-59700f40d0da", "name": "Glenda Wisozk", "email": "Miriam21@gmail.com", "age": 119},
@@ -18,10 +18,19 @@ def stream_users_in_batches(batch_size):
         yield users[i:i + batch_size]
 
 def batch_processing(batch_size):
-    """Process batches and filter users over age 25"""
+    """Process batches and filter users over age 25."""
     # Second loop - processes batches
     for batch in stream_users_in_batches(batch_size):
         # Third loop - filters users
         for user in batch:
             if user["age"] > 25:
-                print(json.dumps(user))
+                yield json.dumps(user)  # Use yield instead of print
+
+# Example usage (this part would be in your 2-main.py)
+if __name__ == "__main__":
+    import sys
+    try:
+        for user in batch_processing(50):
+            print(user)
+    except BrokenPipeError:
+        sys.stderr.close()
