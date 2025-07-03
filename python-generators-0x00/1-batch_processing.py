@@ -1,33 +1,44 @@
+import sqlite3
 import json
 
 def stream_users_in_batches(batch_size):
     """
-    Generator that yields users in batches without using return.
+    Fetches rows in batches from the 'user_data' table.
+    Yields each batch using SQL with SELECT and FROM user_data.
     """
-    users = [
-        {"user_id": "00234e50-34eb-4ce2-94ec-26e3fa749796", "name": "Dan Altenwerth Jr.", "email": "Molly59@gmail.com", "age": 67},
-        {"user_id": "006bfede-724d-4cdd-a2a6-59700f40d0da", "name": "Glenda Wisozk", "email": "Miriam21@gmail.com", "age": 119},
-        {"user_id": "006e1f7f-90c2-45ad-8c1d-1275d594cc88", "name": "Daniel Fahey IV", "email": "Delia.Lesch11@hotmail.com", "age": 49},
-        {"user_id": "00cc08cc-62f4-4da1-b8e4-f5d9ef5dbbd4", "name": "Alma Bechtelar", "email": "Shelly_Balistreri22@hotmail.com", "age": 102},
-        {"user_id": "01187f09-72be-4924-8a2d-150645dcadad", "name": "Jonathon Jones", "email": "Jody.Quigley-Ziemann33@yahoo.com", "age": 116}
-    ]
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
 
-    for i in range(0, len(users), batch_size):
-        yield users[i:i + batch_size]  # ✅ Using yield, not return
+    offset = 0
+    while True:
+        cursor.execute("SELECT user_id, name, email, age FROM user_data LIMIT ? OFFSET ?", (batch_size, offset))
+        rows = cursor.fetchall()
+        if not rows:
+            break
+        yield rows  # ✅ yield used, not return
+        offset += batch_size
+
+    conn.close()
 
 def batch_processing(batch_size):
     """
-    Processes each batch and yields JSON strings for users over 25.
+    Processes users in batches and yields JSON for users older than 25.
     """
     for batch in stream_users_in_batches(batch_size):
-        for user in batch:
+        for row in batch:
+            user = {
+                "user_id": row[0],
+                "name": row[1],
+                "email": row[2],
+                "age": row[3]
+            }
             if user["age"] > 25:
-                yield json.dumps(user)  # ✅ Using yield, not return
+                yield json.dumps(user)
 
 if __name__ == "__main__":
     import sys
     try:
-        for user_json in batch_processing(2):
-            print(user_json)
+        for user in batch_processing(2):  # Change batch size as needed
+            print(user)
     except BrokenPipeError:
         sys.stderr.close()
