@@ -1,0 +1,12 @@
+-- Run this once in SQLite to create dummy data
+CREATE TABLE user_data (
+    user_id TEXT,
+    name TEXT,
+    email TEXT,
+    age INTEGER
+);
+
+-- Insert some sample data
+INSERT INTO user_data VALUES
+("00234e50-34eb-4ce2-94ec-26e3fa749796", "Dan Altenwerth Jr.", "Molly59@gmail.com", 67),
+("006bfede-724d-4cdd-a2a6-59700f40d0da", "Glenda Wisozk", "Miriam21@gmail.com", 119);
