@@ -2,7 +2,9 @@ import sqlite3
 import json
 
 def stream_users_in_batches(batch_size):
-    """Generator that yields users in batches using SQL."""
+    """
+    Generator that yields users in batches from the 'user_data' table using SQL.
+    """
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
     
@@ -14,11 +16,13 @@ def stream_users_in_batches(batch_size):
             break
         yield rows
         offset += batch_size
-    
+
     conn.close()
 
 def batch_processing(batch_size):
-    """Process batches and filter users over age 25."""
+    """
+    Processes user batches and yields users older than 25 as JSON strings.
+    """
     for batch in stream_users_in_batches(batch_size):
         for row in batch:
             user = {
