@@ -1,0 +1,3 @@
+2025-07-25 00:00:00.123456 - User: Anonymous - Path: /api/login/
+2025-07-25 00:05:23.789012 - User: alice - Path: /chats/messages/
+2025-07-25 00:06:11.456789 - User: bob - Path: /chats/send/
