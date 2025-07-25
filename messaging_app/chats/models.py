@@ -6,6 +6,7 @@ from django.core.validators import RegexValidator
 
 class User(AbstractUser):
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
+    password = models.CharField(max_length=128, verbose_name='password')
     phone_number = models.CharField(
         max_length=15, 
         null=True, 

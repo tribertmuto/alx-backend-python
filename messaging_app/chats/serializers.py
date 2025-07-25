@@ -18,11 +18,15 @@ class ConversationSerializer(serializers.ModelSerializer):
     participants = serializers.PrimaryKeyRelatedField(
         many=True, queryset=User.objects.all()
     )
-    messages = MessageSerializer(many=True, read_only=True)
+    messages = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
         fields = ['conversation_id', 'participants', 'messages', 'created_at']
+
+    def get_messages(self, obj):
+        messages = obj.messages.all().order_by('-sent_at')
+        return MessageSerializer(messages, many=True).data
 
     def validate_participants(self, value):
         if not value or len(value) < 2:
