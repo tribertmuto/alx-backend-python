@@ -18,7 +18,9 @@ def conversation_list(request):
     # Get conversations where user is either sender or receiver
     conversations = Message.objects.filter(
         Q(sender=request.user) | Q(receiver=request.user)
-    ).select_related('sender', 'receiver').prefetch_related('replies').distinct()
+    ).select_related('sender', 'receiver').prefetch_related('replies').only(
+        'id', 'content', 'timestamp', 'sender__username', 'receiver__username'
+    ).distinct()
     
     # Group by conversation partner
     conversation_partners = {}
@@ -49,7 +51,10 @@ def conversation_detail(request, user_id):
     messages = Message.objects.filter(
         (Q(sender=request.user) & Q(receiver=other_user)) |
         (Q(sender=other_user) & Q(receiver=request.user))
-    ).select_related('sender', 'receiver').prefetch_related('replies').order_by('timestamp')
+    ).select_related('sender', 'receiver').prefetch_related('replies').only(
+        'id', 'content', 'timestamp', 'read', 'edited', 'parent_message',
+        'sender__username', 'receiver__username'
+    ).order_by('timestamp')
     
     # Mark messages as read
     unread_messages = messages.filter(receiver=request.user, read=False)
@@ -101,7 +106,9 @@ def edit_message(request, message_id):
 def message_history(request, message_id):
     """View edit history of a message."""
     message = get_object_or_404(Message, id=message_id)
-    history = MessageHistory.objects.filter(message=message).order_by('-edited_at')
+    history = MessageHistory.objects.filter(message=message).select_related('edited_by').only(
+        'id', 'old_content', 'edited_at', 'edited_by__username'
+    ).order_by('-edited_at')
     
     context = {
         'message': message,
@@ -113,7 +120,9 @@ def message_history(request, message_id):
 @login_required
 def notifications(request):
     """View user notifications."""
-    notifications = Notification.objects.filter(user=request.user).select_related('message__sender')
+    notifications = Notification.objects.filter(user=request.user).select_related('message__sender').only(
+        'id', 'timestamp', 'read', 'message__content', 'message__sender__username'
+    )
     
     if request.method == 'POST':
         # Mark notifications as read

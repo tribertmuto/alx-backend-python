@@ -38,14 +38,20 @@ class Message(models.Model):
                 models.Q(id=self.parent_message.id) |
                 models.Q(parent_message=self.parent_message) |
                 models.Q(parent_message__parent_message=self.parent_message)
-            ).select_related('sender', 'receiver').prefetch_related('replies')
+            ).select_related('sender', 'receiver').prefetch_related('replies').only(
+                'id', 'content', 'timestamp', 'read', 'edited', 'parent_message',
+                'sender__username', 'receiver__username'
+            )
         else:
             # This is an original message, get it and all its replies
             return Message.objects.filter(
                 models.Q(id=self.id) |
                 models.Q(parent_message=self) |
                 models.Q(parent_message__parent_message=self)
-            ).select_related('sender', 'receiver').prefetch_related('replies')
+            ).select_related('sender', 'receiver').prefetch_related('replies').only(
+                'id', 'content', 'timestamp', 'read', 'edited', 'parent_message',
+                'sender__username', 'receiver__username'
+            )
 
 
 class Notification(models.Model):
