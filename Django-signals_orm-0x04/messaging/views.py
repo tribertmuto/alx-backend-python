@@ -28,14 +28,14 @@ def conversation_list(request):
             conversation_partners[partner.id] = {
                 'partner': partner,
                 'last_message': msg,
-                'unread_count': Message.unread.for_user(request.user).filter(
+                'unread_count': Message.unread.unread_for_user(request.user).filter(
                     sender=partner
                 ).count()
             }
     
     context = {
         'conversations': conversation_partners.values(),
-        'unread_count': Message.unread.for_user(request.user).count()
+        'unread_count': Message.unread.unread_for_user(request.user).count()
     }
     return render(request, 'messaging/conversation_list.html', context)
 
@@ -134,7 +134,7 @@ def notifications(request):
 @login_required
 def unread_messages(request):
     """View unread messages using custom manager."""
-    unread_messages = Message.unread.for_user(request.user)
+    unread_messages = Message.unread.unread_for_user(request.user)
     
     context = {
         'unread_messages': unread_messages,

@@ -123,7 +123,7 @@ class UnreadMessagesManagerTest(TestCase):
 
     def test_unread_messages_manager(self):
         """Test the custom unread messages manager."""
-        unread_messages = Message.unread.for_user(self.user2)
+        unread_messages = Message.unread.unread_for_user(self.user2)
         self.assertEqual(unread_messages.count(), 1)
         self.assertEqual(unread_messages.first().content, 'Unread message 1')
 
@@ -307,6 +307,18 @@ class UserDeletionTest(TestCase):
             content='Message to user1'
         )
         
+        # Create message history entries
+        MessageHistory.objects.create(
+            message=message1,
+            old_content='Original content',
+            edited_by=self.user1
+        )
+        MessageHistory.objects.create(
+            message=message2,
+            old_content='Original content',
+            edited_by=self.user2
+        )
+        
         Notification.objects.create(user=self.user2, message=message1)
         Notification.objects.create(user=self.user1, message=message2)
 
@@ -322,6 +334,10 @@ class UserDeletionTest(TestCase):
         # Check that notifications for user1 are deleted
         self.assertFalse(Notification.objects.filter(user=self.user1).exists())
         
+        # Check that message histories where user1 was the editor are deleted
+        self.assertFalse(MessageHistory.objects.filter(edited_by=self.user1).exists())
+        
         # Check that user2's data is still intact
         self.assertTrue(Message.objects.filter(sender=self.user2).exists())
-        self.assertTrue(Notification.objects.filter(user=self.user2).exists()) 
+        self.assertTrue(Notification.objects.filter(user=self.user2).exists())
+        self.assertTrue(MessageHistory.objects.filter(edited_by=self.user2).exists()) 

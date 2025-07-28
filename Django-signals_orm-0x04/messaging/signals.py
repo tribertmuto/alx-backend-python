@@ -37,6 +37,14 @@ def log_message_edit(sender, instance, **kwargs):
 @receiver(post_delete, sender=User)
 def cleanup_user_data(sender, instance, **kwargs):
     """Clean up all user-related data when a user is deleted."""
-    # This signal will automatically handle CASCADE deletions
-    # but we can add custom cleanup logic here if needed
-    pass 
+    # Delete all messages sent by the user
+    Message.objects.filter(sender=instance).delete()
+    
+    # Delete all messages received by the user
+    Message.objects.filter(receiver=instance).delete()
+    
+    # Delete all notifications for the user
+    Notification.objects.filter(user=instance).delete()
+    
+    # Delete all message histories where the user was the editor
+    MessageHistory.objects.filter(edited_by=instance).delete() 
