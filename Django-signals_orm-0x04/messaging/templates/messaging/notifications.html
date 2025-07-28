@@ -1,0 +1,41 @@
+{% extends 'messaging/base.html' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<h1>Notifications</h1>
+
+{% if notifications %}
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn">Mark Selected as Read</button>
+        
+        <div class="notifications">
+            {% for notification in notifications %}
+                <div class="notification {% if not notification.read %}unread{% endif %}">
+                    <input type="checkbox" name="mark_read" value="{{ notification.id }}" 
+                           {% if notification.read %}disabled{% endif %}>
+                    <div class="notification-content">
+                        <h4>
+                            {% if not notification.read %}<strong>{% endif %}
+                            New message from {{ notification.message.sender.username }}
+                            {% if not notification.read %}</strong>{% endif %}
+                        </h4>
+                        <p>{{ notification.message.content|truncatechars:100 }}</p>
+                        <small>{{ notification.timestamp }}</small>
+                        <a href="{% url 'messaging:conversation_detail' notification.message.sender.id %}">
+                            View Conversation
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </form>
+{% else %}
+    <p>No notifications.</p>
+{% endif %}
+
+<div style="margin-top: 20px;">
+    <a href="{% url 'messaging:conversation_list' %}" class="btn">Back to Conversations</a>
+</div>
+{% endblock %} 

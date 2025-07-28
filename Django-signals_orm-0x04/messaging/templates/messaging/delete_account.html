@@ -1,0 +1,31 @@
+{% extends 'messaging/base.html' %}
+
+{% block title %}Delete Account{% endblock %}
+
+{% block content %}
+<h1>Delete Account</h1>
+
+<div class="warning">
+    <h3 style="color: #dc3545;">⚠️ Warning</h3>
+    <p>This action cannot be undone. Deleting your account will:</p>
+    <ul>
+        <li>Delete all your messages</li>
+        <li>Delete all your notifications</li>
+        <li>Delete all message history</li>
+        <li>Remove your user profile</li>
+    </ul>
+</div>
+
+<form method="post" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.');">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="confirm">Type "DELETE" to confirm:</label>
+        <input type="text" name="confirm" id="confirm" required>
+    </div>
+    <button type="submit" class="btn btn-danger">Delete My Account</button>
+</form>
+
+<div style="margin-top: 20px;">
+    <a href="{% url 'messaging:conversation_list' %}" class="btn">Cancel</a>
+</div>
+{% endblock %} 

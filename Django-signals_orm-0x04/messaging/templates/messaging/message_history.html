@@ -1,0 +1,49 @@
+{% extends 'messaging/base.html' %}
+
+{% block title %}Message History{% endblock %}
+
+{% block content %}
+<h1>Message History</h1>
+
+<div class="current-message">
+    <h3>Current Message</h3>
+    <div class="message">
+        <div class="message-header">
+            <strong>{{ message.sender.username }} to {{ message.receiver.username }}</strong>
+            <small>{{ message.timestamp }}</small>
+            {% if message.edited %}
+                <small style="color: #666;">(edited)</small>
+            {% endif %}
+        </div>
+        <div class="message-content">
+            {{ message.content }}
+        </div>
+    </div>
+</div>
+
+{% if history %}
+    <h3>Edit History</h3>
+    <div class="history">
+        {% for entry in history %}
+            <div class="history-entry">
+                <div class="history-header">
+                    <strong>Edited by {{ entry.edited_by.username }}</strong>
+                    <small>{{ entry.edited_at }}</small>
+                </div>
+                <div class="history-content">
+                    <strong>Previous content:</strong>
+                    <p>{{ entry.old_content }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No edit history available.</p>
+{% endif %}
+
+<div style="margin-top: 20px;">
+    <a href="{% url 'messaging:conversation_detail' message.sender.id %}" class="btn">
+        Back to Conversation
+    </a>
+</div>
+{% endblock %} 

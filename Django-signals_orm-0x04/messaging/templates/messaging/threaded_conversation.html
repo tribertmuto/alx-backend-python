@@ -1,0 +1,58 @@
+{% extends 'messaging/base.html' %}
+
+{% block title %}Threaded Conversation{% endblock %}
+
+{% block content %}
+<h1>Threaded Conversation</h1>
+
+<div class="thread">
+    <h3>Root Message</h3>
+    <div class="message {% if root_message.sender == request.user %}sent{% else %}received{% endif %}">
+        <div class="message-header">
+            <strong>{{ root_message.sender.username }}</strong>
+            <small>{{ root_message.timestamp }}</small>
+        </div>
+        <div class="message-content">
+            {{ root_message.content }}
+        </div>
+    </div>
+
+    <h3>Thread</h3>
+    {% for message in thread_messages %}
+        {% if message != root_message %}
+            <div class="message {% if message.sender == request.user %}sent{% else %}received{% endif %}" 
+                 style="margin-left: 20px;">
+                <div class="message-header">
+                    <strong>{{ message.sender.username }}</strong>
+                    <small>{{ message.timestamp }}</small>
+                    {% if message.edited %}
+                        <small style="color: #666;">(edited)</small>
+                    {% endif %}
+                </div>
+                <div class="message-content">
+                    {{ message.content }}
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<div class="send-reply">
+    <h3>Send Reply</h3>
+    <form method="post" action="{% url 'messaging:send_message' root_message.sender.id %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="content">Reply:</label>
+            <textarea name="content" id="content" rows="3" required></textarea>
+        </div>
+        <input type="hidden" name="parent_message" value="{{ root_message.id }}">
+        <button type="submit" class="btn">Send Reply</button>
+    </form>
+</div>
+
+<div style="margin-top: 20px;">
+    <a href="{% url 'messaging:conversation_detail' root_message.sender.id %}" class="btn">
+        Back to Conversation
+    </a>
+</div>
+{% endblock %} 

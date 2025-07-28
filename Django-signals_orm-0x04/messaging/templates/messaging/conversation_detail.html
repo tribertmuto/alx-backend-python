@@ -1,0 +1,74 @@
+{% extends 'messaging/base.html' %}
+
+{% block title %}Conversation with {{ other_user.username }}{% endblock %}
+
+{% block content %}
+<h1>Conversation with {{ other_user.username }}</h1>
+
+<div class="messages">
+    {% for message in messages %}
+        <div class="message {% if message.sender == request.user %}sent{% else %}received{% endif %}">
+            <div class="message-header">
+                <strong>{{ message.sender.username }}</strong>
+                <small>{{ message.timestamp }}</small>
+                {% if message.edited %}
+                    <small style="color: #666;">(edited)</small>
+                {% endif %}
+            </div>
+            <div class="message-content">
+                {{ message.content }}
+            </div>
+            {% if message.sender == request.user %}
+                <div class="message-actions">
+                    <a href="{% url 'messaging:edit_message' message.id %}">Edit</a>
+                    {% if message.history.exists %}
+                        <a href="{% url 'messaging:message_history' message.id %}">History</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+            {% if message.replies.exists %}
+                <div class="replies">
+                    {% for reply in message.replies.all %}
+                        <div class="reply" style="margin-left: 20px; margin-top: 10px;">
+                            <div class="message-header">
+                                <strong>{{ reply.sender.username }}</strong>
+                                <small>{{ reply.timestamp }}</small>
+                            </div>
+                            <div class="message-content">
+                                {{ reply.content }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p>No messages yet.</p>
+    {% endfor %}
+</div>
+
+<div class="send-message">
+    <h3>Send Message</h3>
+    <form method="post" action="{% url 'messaging:send_message' other_user.id %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="content">Message:</label>
+            <textarea name="content" id="content" rows="3" required></textarea>
+        </div>
+        <div class="form-group">
+            <label for="parent_message">Reply to (optional):</label>
+            <select name="parent_message" id="parent_message">
+                <option value="">New message</option>
+                {% for message in messages %}
+                    <option value="{{ message.id }}">{{ message.content|truncatechars:30 }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn">Send Message</button>
+    </form>
+</div>
+
+<div style="margin-top: 20px;">
+    <a href="{% url 'messaging:conversation_list' %}" class="btn">Back to Conversations</a>
+</div>
+{% endblock %} 

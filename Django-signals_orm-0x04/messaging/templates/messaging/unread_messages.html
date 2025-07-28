@@ -1,0 +1,34 @@
+{% extends 'messaging/base.html' %}
+
+{% block title %}Unread Messages{% endblock %}
+
+{% block content %}
+<h1>Unread Messages</h1>
+
+{% if unread_messages %}
+    <div class="unread-messages">
+        {% for message in unread_messages %}
+            <div class="message received">
+                <div class="message-header">
+                    <strong>{{ message.sender.username }}</strong>
+                    <small>{{ message.timestamp }}</small>
+                </div>
+                <div class="message-content">
+                    {{ message.content }}
+                </div>
+                <div class="message-actions">
+                    <a href="{% url 'messaging:conversation_detail' message.sender.id %}" class="btn">
+                        Reply
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No unread messages.</p>
+{% endif %}
+
+<div style="margin-top: 20px;">
+    <a href="{% url 'messaging:conversation_list' %}" class="btn">Back to Conversations</a>
+</div>
+{% endblock %} 
