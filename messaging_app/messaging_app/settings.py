@@ -72,8 +72,12 @@ WSGI_APPLICATION = 'messaging_app.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.environ.get('MYSQL_DATABASE', 'messaging_db'),
+        'USER': os.environ.get('MYSQL_USER', 'messaging_user'),
+        'PASSWORD': os.environ.get('MYSQL_PASSWORD', 'messaging_pass'),
+        'HOST': os.environ.get('DB_HOST', 'db'),  # 'db' is the service name in docker-compose
+        'PORT': os.environ.get('DB_PORT', '3306'),
     }
 }
 
