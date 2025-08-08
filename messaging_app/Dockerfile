@@ -16,6 +16,7 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY . /app/
 
 # Expose port 8000 for Django
+# To run: docker run -p 8000:8000 <image_name>
 EXPOSE 8000
 
 # Default command (can be overridden in docker-compose)
