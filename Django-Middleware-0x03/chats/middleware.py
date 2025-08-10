@@ -19,7 +19,7 @@ class RequestLoggingMiddleware:
     def __call__(self, request):
         try:
             user = request.user if request.user.is_authenticated else 'Anonymous'
-            logging.info(f"User: {user} - Path: {request.path} - Method: {request.method}")
+            logging.info(f"{datetime.now()} - User: {user} - Path: {request.path}")
             response = self.get_response(request)
             return response
         except Exception as e:
@@ -33,15 +33,15 @@ class RestrictAccessByTimeMiddleware:
     def __call__(self, request):
         try:
             now = datetime.now().time()
-            # Allow access between 6 PM and 9 PM (18:00 - 21:00)
-            if not (18 <= now.hour < 21):
+            # Deny access outside 6PM and 9PM (allow only between 18:00 - 21:00)
+            if now.hour < 18 or now.hour >= 21:
                 return HttpResponseForbidden("Access to chat is allowed only between 6PM and 9PM.")
             return self.get_response(request)
         except Exception as e:
             logging.error(f"Error in RestrictAccessByTimeMiddleware: {str(e)}")
             return HttpResponseServerError("Internal server error")
 
-class RateLimitMiddleware:
+class OffensiveLanguageMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
         self.message_log = {}
@@ -61,7 +61,7 @@ class RateLimitMiddleware:
                 self.message_log[ip] = messages
             return self.get_response(request)
         except Exception as e:
-            logging.error(f"Error in RateLimitMiddleware: {str(e)}")
+            logging.error(f"Error in OffensiveLanguageMiddleware: {str(e)}")
             return HttpResponseServerError("Internal server error")
 
 class RolepermissionMiddleware:
@@ -70,14 +70,18 @@ class RolepermissionMiddleware:
 
     def __call__(self, request):
         try:
-            protected_paths = ['/api/delete/', '/api/manage/']
+            # Define protected paths that require admin/moderator access
+            protected_paths = ['/api/delete/', '/api/manage/', '/admin/']
             user = request.user
             
+            # Check if the request path requires role-based permissions
             if any(request.path.startswith(path) for path in protected_paths):
+                # First check authentication
                 if not user.is_authenticated:
                     return HttpResponseForbidden("Authentication required.")
                 
-                if not hasattr(user, 'role') or user.role not in ['admin', 'moderator']:
+                # Then check role permissions (admin or moderator required)
+                if not (hasattr(user, 'role') and user.role in ['admin', 'moderator']):
                     return HttpResponseForbidden("You do not have permission to access this resource.")
             
             return self.get_response(request)
