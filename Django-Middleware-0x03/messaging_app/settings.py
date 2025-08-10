@@ -48,7 +48,7 @@ MIDDLEWARE = [
     'chats.middleware.RolepermissionMiddleware',
 ]
 
-ROOT_URLCONF = 'urls'
+ROOT_URLCONF = 'messaging_app.urls'
 
 TEMPLATES = [
     {
@@ -66,7 +66,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'wsgi.application'
+WSGI_APPLICATION = 'messaging_app.wsgi.application'
 
 # Database
 DATABASES = {
