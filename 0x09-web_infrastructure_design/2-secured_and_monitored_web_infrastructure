@@ -1,0 +1,99 @@
+Secured and Monitored Web Infrastructure Design (3 Servers)
+
+Infrastructure Components:
+
+Server 1: Load Balancer Server
+- HAProxy Load Balancer with SSL termination
+- SSL Certificate for www.foobar.com
+- Firewall 1
+- Monitoring Client 1 (Sumologic data collector)
+
+Server 2: Web/Application Server 1  
+- Nginx Web Server
+- Application Server
+- Application Files (Code Base)
+- Firewall 2
+- Monitoring Client 2 (Sumologic data collector)
+
+Server 3: Web/Application Server 2 + Database
+- Nginx Web Server
+- Application Server  
+- Application Files (Code Base)
+- MySQL Database (Primary)
+- Firewall 3
+- Monitoring Client 3 (Sumologic data collector)
+
+Why Each Additional Element is Added:
+
+1. Firewalls (3 total):
+   - Control incoming and outgoing network traffic
+   - Block unauthorized access attempts
+   - Protect against malicious attacks
+   - Create security perimeter around each server
+
+2. SSL Certificate:
+   - Enables HTTPS encryption for www.foobar.com
+   - Protects data in transit between client and server
+   - Builds user trust and confidence
+   - Required for modern web security standards
+
+3. Monitoring Clients (3 total):
+   - Collect performance and health metrics
+   - Enable proactive issue detection
+   - Provide insights into system behavior
+   - Support capacity planning and optimization
+
+What Firewalls Are For:
+- Network security barrier between trusted internal network and untrusted external network
+- Filter traffic based on predetermined security rules
+- Block malicious traffic and unauthorized access
+- Monitor and log network activity
+
+Why Traffic is Served Over HTTPS:
+- Encrypts data between client and server
+- Prevents man-in-the-middle attacks
+- Protects sensitive user information (passwords, personal data)
+- Improves SEO rankings and user trust
+- Required by modern browsers for certain features
+
+What Monitoring is Used For:
+- Performance tracking (response times, throughput)
+- Resource utilization monitoring (CPU, memory, disk)
+- Error detection and alerting
+- Security incident detection
+- Capacity planning and scaling decisions
+
+How Monitoring Tool Collects Data:
+- Agents installed on each server collect metrics
+- Data sent to centralized monitoring service (Sumologic)
+- Metrics include system resources, application logs, network traffic
+- Real-time dashboards and alerting systems
+- Historical data storage for trend analysis
+
+Monitoring Web Server QPS (Queries Per Second):
+- Configure monitoring agent to track HTTP request metrics
+- Set up custom dashboards in Sumologic
+- Create alerts for QPS thresholds
+- Monitor nginx access logs for request patterns
+- Track response codes and response times
+
+Issues with this Infrastructure:
+
+1. SSL Termination at Load Balancer:
+   - Traffic between load balancer and web servers is unencrypted
+   - Internal network vulnerabilities
+   - Potential data exposure within infrastructure
+   - Compliance issues for sensitive data
+
+2. Single MySQL Server for Writes:
+   - Single point of failure for write operations
+   - No write scalability
+   - Potential data loss if server fails
+   - Performance bottleneck for write-heavy applications
+
+3. Servers with Same Components:
+   - Resource inefficiency (database on multiple servers)
+   - Maintenance complexity
+   - Potential conflicts between services
+   - Suboptimal resource allocation
+   - Harder to scale individual components independently

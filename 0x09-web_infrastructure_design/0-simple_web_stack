@@ -1,0 +1,68 @@
+Simple Web Stack Infrastructure Design
+
+User Request Flow:
+1. User types www.foobar.com in their browser
+2. Browser performs DNS lookup for www.foobar.com
+3. DNS returns IP address 8.8.8.8
+4. Browser sends HTTP request to 8.8.8.8
+5. Nginx web server receives the request
+6. Nginx forwards request to application server
+7. Application server processes request and queries MySQL database if needed
+8. Response flows back: Database → Application Server → Web Server → User
+
+Components:
+
+1. Server (Physical/Virtual Machine at IP 8.8.8.8)
+   - A computer that hosts and serves the website
+   - Provides computational resources (CPU, RAM, storage)
+   - Runs all required software components
+
+2. Domain Name (foobar.com)
+   - Human-readable address that maps to server IP
+   - Makes it easy for users to access the website
+   - DNS record "www" is a CNAME or A record pointing to 8.8.8.8
+
+3. Web Server (Nginx)
+   - Handles HTTP requests from clients
+   - Serves static files (HTML, CSS, JS, images)
+   - Acts as reverse proxy to application server
+   - Manages SSL/TLS certificates
+
+4. Application Server
+   - Executes dynamic application code
+   - Processes business logic
+   - Handles user authentication and sessions
+   - Communicates with database
+
+5. Database (MySQL)
+   - Stores and retrieves application data
+   - Manages user accounts, content, configurations
+   - Provides data persistence and integrity
+
+6. Application Files (Code Base)
+   - The actual website/application code
+   - Contains business logic, templates, assets
+   - Deployed on the application server
+
+Communication Protocol:
+- HTTP/HTTPS for browser-server communication
+- TCP/IP for all network communications
+- SQL for database queries
+
+Issues with this Infrastructure:
+
+1. Single Point of Failure (SPOF):
+   - If the server fails, entire website goes down
+   - No redundancy or backup systems
+   - Database failure affects entire application
+
+2. Downtime During Maintenance:
+   - Deploying new code requires restarting services
+   - Server updates require downtime
+   - No way to maintain service during updates
+
+3. Scalability Issues:
+   - Cannot handle high traffic loads
+   - Single server has limited resources
+   - No load distribution mechanism
+   - Performance degrades as user base grows

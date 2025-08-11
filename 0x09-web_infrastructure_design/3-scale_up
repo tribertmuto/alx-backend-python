@@ -1,0 +1,102 @@
+Scaled Up Web Infrastructure Design (4 Servers + HA Load Balancer)
+
+Infrastructure Components:
+
+Server 1: Load Balancer Primary
+- HAProxy Load Balancer (Primary)
+- SSL Certificate management
+- Firewall
+- Monitoring Client
+
+Server 2: Load Balancer Secondary  
+- HAProxy Load Balancer (Secondary - clustered with primary)
+- SSL Certificate management
+- Firewall
+- Monitoring Client
+
+Server 3: Web Server (Dedicated)
+- Nginx Web Server only
+- SSL certificates for backend communication
+- Firewall
+- Monitoring Client
+
+Server 4: Application Server (Dedicated)
+- Application Server only
+- Application Files (Code Base)
+- Business logic processing
+- Firewall  
+- Monitoring Client
+
+Server 5: Database Server (Dedicated)
+- MySQL Database (Primary)
+- Database replication setup
+- Dedicated storage and backup
+- Firewall
+- Monitoring Client
+
+Why Each Additional Element is Added:
+
+1. Additional Server:
+   - Enables component separation for better performance
+   - Dedicated resources for each service type
+   - Better scalability and maintenance
+   - Reduced resource contention
+
+2. Load Balancer Cluster (HAProxy):
+   - Eliminates single point of failure for load balancing
+   - High availability through active-passive or active-active setup
+   - Seamless failover between load balancers
+   - Improved reliability and uptime
+
+3. Component Separation:
+
+   Web Server (Dedicated):
+   - Optimized for serving static content
+   - Better SSL/TLS performance
+   - Improved caching capabilities
+   - Reduced memory footprint
+
+   Application Server (Dedicated):  
+   - Optimized for business logic processing
+   - Better resource allocation for CPU-intensive tasks
+   - Easier scaling based on application load
+   - Improved security isolation
+
+   Database Server (Dedicated):
+   - Optimized for data storage and retrieval
+   - Better I/O performance with dedicated storage
+   - Enhanced security for sensitive data
+   - Easier database maintenance and backup
+
+Benefits of This Architecture:
+
+1. High Availability:
+   - No single point of failure
+   - Redundant load balancers
+   - Component isolation prevents cascade failures
+
+2. Scalability:
+   - Each component can be scaled independently
+   - Easy to add more web or application servers
+   - Database can be scaled with read replicas
+
+3. Performance:
+   - Dedicated resources for each service
+   - Optimized configurations per component
+   - Better resource utilization
+
+4. Maintenance:
+   - Components can be updated independently
+   - Rolling deployments possible
+   - Reduced downtime during maintenance
+
+5. Security:
+   - Better isolation between components
+   - Granular firewall rules per service
+   - Reduced attack surface per server
+
+Load Balancer Clustering:
+- Active-Passive setup with heartbeat monitoring
+- Automatic failover in case of primary failure
+- Shared configuration and SSL certificates
+- Virtual IP (VIP) for seamless switching

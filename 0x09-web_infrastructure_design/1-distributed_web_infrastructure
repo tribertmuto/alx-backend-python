@@ -1,0 +1,83 @@
+Distributed Web Infrastructure Design (3 Servers)
+
+Infrastructure Components:
+
+Server 1: Load Balancer Server
+- HAProxy Load Balancer
+- Routes incoming traffic to web servers
+
+Server 2: Web/Application Server 1
+- Nginx Web Server
+- Application Server
+- Application Files (Code Base)
+
+Server 3: Web/Application Server 2 + Database
+- Nginx Web Server  
+- Application Server
+- Application Files (Code Base)
+- MySQL Database (Primary)
+
+Why Each Component is Added:
+
+1. Additional Servers (2 more):
+   - Eliminates single point of failure
+   - Provides redundancy and fault tolerance
+   - Enables load distribution
+
+2. Load Balancer (HAProxy):
+   - Distributes incoming requests across multiple servers
+   - Improves response times and availability
+   - Provides health checking and failover
+
+3. Multiple Web/Application Servers:
+   - Handles increased traffic load
+   - Provides redundancy if one server fails
+   - Enables horizontal scaling
+
+Load Balancer Configuration:
+
+Distribution Algorithm: Round Robin
+- Requests are distributed sequentially to each server
+- Each server gets equal number of requests
+- Simple and effective for servers with similar capacity
+
+Setup Type: Active-Active
+- Both web servers actively handle requests simultaneously
+- Load is distributed between both servers
+- Better resource utilization
+
+Active-Active vs Active-Passive:
+- Active-Active: All servers handle traffic, better performance
+- Active-Passive: One server active, others on standby, used for failover only
+
+Database Cluster: Primary-Replica (Master-Slave)
+
+How it Works:
+- Primary node handles all write operations
+- Replica node receives copies of all data changes
+- Replica can handle read operations
+- Automatic failover if primary fails
+
+Primary vs Replica Node:
+- Primary: Handles writes, authoritative data source
+- Replica: Handles reads, backup for failover
+- Application connects to primary for writes, can use replica for reads
+
+Issues with this Infrastructure:
+
+1. Single Points of Failure (SPOF):
+   - Load balancer is still a single point of failure
+   - Primary database failure affects write operations
+   - No redundancy for load balancer
+
+2. Security Issues:
+   - No firewall protection
+   - No HTTPS encryption
+   - Data transmitted in plain text
+   - Vulnerable to attacks and eavesdropping
+
+3. No Monitoring:
+   - Cannot detect performance issues
+   - No alerting for failures
+   - Unable to track resource usage
+   - Difficult to troubleshoot problems
