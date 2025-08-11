@@ -1,0 +1,38 @@
+# Kubernetes Ingress Setup Commands
+
+# 1. Enable ingress addon in minikube (if not already enabled)
+minikube addons enable ingress
+
+# 2. Verify ingress controller is running
+kubectl get pods -n ingress-nginx
+
+# 3. Apply the ingress configuration
+kubectl apply -f ingress.yaml
+
+# 4. Verify ingress resource was created
+kubectl get ingress
+
+# 5. Get ingress details
+kubectl describe ingress django-messaging-ingress
+
+# 6. Add local DNS entries to /etc/hosts (or C:\Windows\System32\drivers\etc\hosts on Windows)
+# Get minikube IP first
+minikube ip
+
+# Then add entries like:
+# 192.168.49.2 messaging.local
+# 192.168.49.2 api.messaging.local
+# (Replace 192.168.49.2 with your actual minikube IP)
+
+# 7. Test ingress connectivity
+curl http://messaging.local/
+curl http://api.messaging.local/v1/
+
+# 8. Alternative: Use kubectl port-forward for testing without DNS setup
+kubectl port-forward service/ingress-nginx-controller -n ingress-nginx 8080:80
+
+# 9. View ingress controller logs (if troubleshooting needed)
+kubectl logs -n ingress-nginx deployment/ingress-nginx-controller
+
+# 10. Clean up ingress resources (optional)
+kubectl delete -f ingress.yaml

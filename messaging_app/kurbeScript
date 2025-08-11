@@ -1,0 +1,80 @@
+#!/bin/bash
+
+echo "=== Kubernetes Local Cluster Setup Script ==="
+echo ""
+
+# Check if minikube is installed
+echo "Checking if minikube is installed..."
+if ! command -v minikube &> /dev/null; then
+    echo "Error: minikube is not installed. Please install minikube first."
+    echo "Visit: https://minikube.sigs.k8s.io/docs/start/"
+    exit 1
+fi
+
+echo "✅ minikube is installed"
+
+# Check if kubectl is installed
+echo "Checking if kubectl is installed..."
+if ! command -v kubectl &> /dev/null; then
+    echo "Error: kubectl is not installed. Please install kubectl first."
+    echo "Visit: https://kubernetes.io/docs/tasks/tools/"
+    exit 1
+fi
+
+echo "✅ kubectl is installed"
+
+# Start minikube cluster
+echo ""
+echo "Starting Kubernetes cluster with minikube..."
+minikube start --driver=docker
+
+if [ $? -eq 0 ]; then
+    echo "✅ Kubernetes cluster started successfully"
+else
+    echo "❌ Failed to start Kubernetes cluster"
+    exit 1
+fi
+
+# Wait for cluster to be ready
+echo ""
+echo "Waiting for cluster to be ready..."
+sleep 10
+
+# Verify cluster is running
+echo ""
+echo "Verifying cluster status..."
+kubectl cluster-info
+
+if [ $? -eq 0 ]; then
+    echo "✅ Cluster info retrieved successfully"
+else
+    echo "❌ Failed to retrieve cluster info"
+    exit 1
+fi
+
+# Get cluster nodes
+echo ""
+echo "Getting cluster nodes..."
+kubectl get nodes
+
+# Retrieve available pods
+echo ""
+echo "Retrieving available pods..."
+kubectl get pods --all-namespaces
+
+# Enable required addons
+echo ""
+echo "Enabling required addons..."
+minikube addons enable ingress
+minikube addons enable metrics-server
+
+echo ""
+echo "=== Kubernetes Setup Complete ==="
+echo "Your Kubernetes cluster is now running and ready for deployments!"
+echo ""
+echo "Useful commands:"
+echo "  kubectl get pods --all-namespaces  # List all pods"
+echo "  kubectl get services               # List all services"  
+echo "  minikube dashboard                 # Open Kubernetes dashboard"
+echo "  minikube stop                      # Stop the cluster"
+echo "  minikube delete                    # Delete the cluster"

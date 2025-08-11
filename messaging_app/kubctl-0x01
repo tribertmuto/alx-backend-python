@@ -1,0 +1,126 @@
+#!/bin/bash
+
+echo "=== Kubernetes Scaling and Load Testing Script ==="
+echo ""
+
+# Check if kubectl is available
+if ! command -v kubectl &> /dev/null; then
+    echo "Error: kubectl is not installed or not in PATH"
+    exit 1
+fi
+
+# Check if wrk is available
+if ! command -v wrk &> /dev/null; then
+    echo "Warning: wrk is not installed. Load testing will be skipped."
+    echo "To install wrk:"
+    echo "  Ubuntu/Debian: sudo apt-get install wrk"
+    echo "  macOS: brew install wrk"
+    echo "  Or build from source: https://github.com/wg/wrk"
+    WRK_AVAILABLE=false
+else
+    WRK_AVAILABLE=true
+fi
+
+echo "Checking current deployment status..."
+kubectl get deployments
+
+echo ""
+echo "Current pods before scaling:"
+kubectl get pods -l app=django-messaging-app
+
+echo ""
+echo "Scaling Django messaging app deployment to 3 replicas..."
+kubectl scale deployment django-messaging-app --replicas=3
+
+if [ $? -eq 0 ]; then
+    echo "✅ Scaling command executed successfully"
+else
+    echo "❌ Failed to scale deployment"
+    exit 1
+fi
+
+echo ""
+echo "Waiting for pods to be ready..."
+kubectl wait --for=condition=ready pod -l app=django-messaging-app --timeout=300s
+
+echo ""
+echo "Verifying scaled pods are running..."
+kubectl get pods -l app=django-messaging-app
+
+echo ""
+echo "Deployment status after scaling:"
+kubectl get deployments django-messaging-app
+
+echo ""
+echo "Service endpoints:"
+kubectl get endpoints django-messaging-service
+
+# Load testing with wrk (if available)
+if [ "$WRK_AVAILABLE" = true ]; then
+    echo ""
+    echo "Starting load testing..."
+    
+    # Get the service URL (assuming port-forward or ingress is set up)
+    # For local testing, we'll need to port-forward
+    echo "Setting up port-forward for load testing..."
+    kubectl port-forward service/django-messaging-service 8080:80 &
+    PORT_FORWARD_PID=$!
+    
+    # Wait for port-forward to be ready
+    sleep 5
+    
+    echo "Running load test with wrk for 30 seconds, 4 threads, 12 connections..."
+    wrk -t4 -c12 -d30s http://localhost:8080/
+    
+    # Stop port-forward
+    kill $PORT_FORWARD_PID 2>/dev/null
+    
+    echo "Load testing completed."
+else
+    echo ""
+    echo "⚠️  wrk not available, skipping load testing"
+    echo "To test manually, run:"
+    echo "  kubectl port-forward service/django-messaging-service 8080:80"
+    echo "  curl http://localhost:8080/"
+fi
+
+echo ""
+echo "=== Resource Usage Monitoring ==="
+echo ""
+
+# Check if metrics-server is available
+echo "Checking metrics server availability..."
+kubectl get nodes --no-headers | head -1 | awk '{print $1}' | xargs kubectl top node > /dev/null 2>&1
+
+if [ $? -eq 0 ]; then
+    echo "✅ Metrics server is available"
+    echo ""
+    echo "Node resource usage:"
+    kubectl top nodes
+    
+    echo ""
+    echo "Pod resource usage:"
+    kubectl top pods -l app=django-messaging-app
+    
+else
+    echo "⚠️  Metrics server not available or not ready yet"
+    echo "To enable metrics server in minikube:"
+    echo "  minikube addons enable metrics-server"
+    echo "  Wait a few minutes for metrics to be available"
+fi
+
+echo ""
+echo "Pod resource requests and limits:"
+kubectl describe pods -l app=django-messaging-app | grep -A 10 "Containers:" | grep -E "(Limits|Requests):" -A 2
+
+echo ""
+echo "=== Scaling Test Complete ==="
+echo "Summary:"
+echo "- Scaled deployment to 3 replicas"
+echo "- Verified pods are running"
+echo "- Monitored resource usage"
+if [ "$WRK_AVAILABLE" = true ]; then
+    echo "- Performed load testing"
+fi
+echo ""
+echo "To scale back down: kubectl scale deployment django-messaging-app --replicas=1"
