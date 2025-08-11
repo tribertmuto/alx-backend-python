@@ -1,31 +1,40 @@
 #!/bin/bash
 
 echo "=== Kubernetes Local Cluster Setup Script ==="
+echo "Objective: Learn how to set up and use Kubernetes locally"
 echo ""
 
-# Check if minikube is installed
-echo "Checking if minikube is installed..."
+# Ensure minikube is installed (as per requirements)
+echo "Step 1: Ensuring minikube is installed..."
 if ! command -v minikube &> /dev/null; then
-    echo "Error: minikube is not installed. Please install minikube first."
-    echo "Visit: https://minikube.sigs.k8s.io/docs/start/"
+    echo "❌ Error: minikube is not installed. Please install minikube first."
+    echo "Installation instructions:"
+    echo "  - Visit: https://minikube.sigs.k8s.io/docs/start/"
+    echo "  - Or use package managers:"
+    echo "    • macOS: brew install minikube"
+    echo "    • Windows: choco install minikube"
+    echo "    • Ubuntu: sudo apt-get install minikube"
     exit 1
 fi
 
 echo "✅ minikube is installed"
+minikube version
 
-# Check if kubectl is installed
-echo "Checking if kubectl is installed..."
+echo ""
+echo "Step 2: Checking if kubectl is installed..."
 if ! command -v kubectl &> /dev/null; then
-    echo "Error: kubectl is not installed. Please install kubectl first."
+    echo "❌ Error: kubectl is not installed. Please install kubectl first."
     echo "Visit: https://kubernetes.io/docs/tasks/tools/"
     exit 1
 fi
 
 echo "✅ kubectl is installed"
+kubectl version --client
 
-# Start minikube cluster
+# Start Kubernetes cluster on your machine (as per requirements)
 echo ""
-echo "Starting Kubernetes cluster with minikube..."
+echo "Step 3: Starting Kubernetes cluster on your machine..."
+echo "Using minikube to create a local Kubernetes cluster..."
 minikube start --driver=docker
 
 if [ $? -eq 0 ]; then
@@ -40,41 +49,61 @@ echo ""
 echo "Waiting for cluster to be ready..."
 sleep 10
 
-# Verify cluster is running
+# Verify that the cluster is running using kubectl cluster-info (as per requirements)
 echo ""
-echo "Verifying cluster status..."
+echo "Step 4: Verifying that the cluster is running using kubectl cluster-info..."
 kubectl cluster-info
 
 if [ $? -eq 0 ]; then
-    echo "✅ Cluster info retrieved successfully"
+    echo "✅ Cluster info retrieved successfully - Cluster is running!"
 else
-    echo "❌ Failed to retrieve cluster info"
+    echo "❌ Failed to retrieve cluster info - Cluster may not be running properly"
     exit 1
 fi
 
-# Get cluster nodes
+# Get cluster nodes for learning purposes
 echo ""
-echo "Getting cluster nodes..."
+echo "Step 5: Getting cluster nodes information..."
 kubectl get nodes
 
-# Retrieve available pods
+# Retrieve the available pods (as per requirements)
 echo ""
-echo "Retrieving available pods..."
+echo "Step 6: Retrieving the available pods..."
+echo "Listing all pods across all namespaces:"
 kubectl get pods --all-namespaces
 
-# Enable required addons
 echo ""
-echo "Enabling required addons..."
+echo "Pod count summary:"
+kubectl get pods --all-namespaces --no-headers | wc -l | awk '{print "Total pods: " $1}'
+
+# Enable useful addons for local Kubernetes learning
+echo ""
+echo "Step 7: Enabling useful addons for local development..."
+echo "Enabling ingress addon..."
 minikube addons enable ingress
+echo "Enabling metrics-server addon..."
 minikube addons enable metrics-server
 
 echo ""
-echo "=== Kubernetes Setup Complete ==="
-echo "Your Kubernetes cluster is now running and ready for deployments!"
+echo "=== Kubernetes Local Setup Complete ==="
+echo "🎉 Your local Kubernetes cluster is now running and ready!"
 echo ""
-echo "Useful commands:"
-echo "  kubectl get pods --all-namespaces  # List all pods"
-echo "  kubectl get services               # List all services"  
-echo "  minikube dashboard                 # Open Kubernetes dashboard"
-echo "  minikube stop                      # Stop the cluster"
-echo "  minikube delete                    # Delete the cluster"
+echo "Summary of what was accomplished:"
+echo "✅ 1. Ensured minikube is installed"
+echo "✅ 2. Started Kubernetes cluster on your machine" 
+echo "✅ 3. Verified cluster is running using kubectl cluster-info"
+echo "✅ 4. Retrieved available pods"
+echo "✅ 5. Enabled useful addons (ingress, metrics-server)"
+echo ""
+echo "Next steps for learning Kubernetes locally:"
+echo "  kubectl get pods --all-namespaces    # List all pods"
+echo "  kubectl get services                 # List all services"  
+echo "  kubectl get nodes                    # List cluster nodes"
+echo "  minikube dashboard                   # Open Kubernetes web dashboard"
+echo "  kubectl create deployment test --image=nginx  # Create a test deployment"
+echo ""
+echo "Cluster management commands:"
+echo "  minikube status    # Check cluster status"
+echo "  minikube stop      # Stop the cluster"
+echo "  minikube start     # Start the cluster"  
+echo "  minikube delete    # Delete the cluster completely"
