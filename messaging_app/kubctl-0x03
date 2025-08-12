@@ -1,0 +1,199 @@
+#!/bin/bash
+
+echo "=== Rolling Update Script ==="
+echo ""
+
+# Check if kubectl is available
+if ! command -v kubectl &> /dev/null; then
+    echo "Error: kubectl is not installed or not in PATH"
+    exit 1
+fi
+
+# Check if curl is available
+if ! command -v curl &> /dev/null; then
+    echo "Error: curl is not installed or not in PATH"
+    exit 1
+fi
+
+# Function to test app availability
+test_app_availability() {
+    local test_duration=$1
+    local test_interval=$2
+    local port=$3
+    
+    echo "Testing app availability for $test_duration seconds (checking every $test_interval seconds)..."
+    
+    local end_time=$((SECONDS + test_duration))
+    local success_count=0
+    local failure_count=0
+    
+    while [ $SECONDS -lt $end_time ]; do
+        response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$port/ 2>/dev/null)
+        
+        if [ "$response" = "200" ]; then
+            success_count=$((success_count + 1))
+            echo "$(date): ✅ App responding (HTTP 200) - Success: $success_count, Failures: $failure_count"
+        else
+            failure_count=$((failure_count + 1))
+            echo "$(date): ❌ App not responding (HTTP $response) - Success: $success_count, Failures: $failure_count"
+        fi
+        
+        sleep $test_interval
+    done
+    
+    echo ""
+    echo "Test Results:"
+    echo "- Total Successes: $success_count"
+    echo "- Total Failures: $failure_count"
+    
+    if [ $failure_count -eq 0 ]; then
+        echo "✅ No downtime detected during rolling update!"
+        return 0
+    else
+        echo "⚠️  Detected $failure_count failures during rolling update"
+        return 1
+    fi
+}
+
+echo "=== Step 1: Check Current Deployment Status ==="
+echo ""
+
+echo "Current blue deployment status:"
+kubectl get deployment django-messaging-app-blue
+
+echo ""
+echo "Current pods:"
+kubectl get pods -l app=django-messaging-app,version=blue
+
+echo ""
+echo "Current pod images:"
+kubectl get pods -l app=django-messaging-app,version=blue -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[0].image}{"\n"}{end}'
+
+echo ""
+echo "=== Step 2: Set Up Port Forward for Continuous Testing ==="
+echo ""
+
+# Start port-forward in background
+echo "Starting port-forward to monitor app during rolling update..."
+kubectl port-forward service/django-messaging-service-blue 8082:80 &
+PORT_FORWARD_PID=$!
+
+# Wait for port-forward to be ready
+sleep 3
+
+# Test initial connectivity
+echo "Testing initial app connectivity..."
+initial_response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8082/)
+if [ "$initial_response" = "200" ]; then
+    echo "✅ App is initially responding (HTTP $initial_response)"
+else
+    echo "❌ App is not initially responding (HTTP $initial_response)"
+    echo "Stopping script due to initial connectivity failure"
+    kill $PORT_FORWARD_PID 2>/dev/null
+    exit 1
+fi
+
+echo ""
+echo "=== Step 3: Apply Rolling Update ==="
+echo ""
+
+echo "Applying updated blue deployment (image version 2.0)..."
+
+# Start continuous testing in background
+(
+    sleep 2  # Give a moment for the update to start
+    test_app_availability 60 2 8082
+) &
+TEST_PID=$!
+
+# Apply the updated deployment
+kubectl apply -f blue_deployment.yaml
+
+if [ $? -eq 0 ]; then
+    echo "✅ Rolling update initiated successfully"
+else
+    echo "❌ Failed to apply rolling update"
+    kill $PORT_FORWARD_PID 2>/dev/null
+    kill $TEST_PID 2>/dev/null
+    exit 1
+fi
+
+echo ""
+echo "=== Step 4: Monitor Rolling Update Progress ==="
+echo ""
+
+echo "Monitoring rollout status..."
+kubectl rollout status deployment/django-messaging-app-blue --timeout=300s
+
+if [ $? -eq 0 ]; then
+    echo "✅ Rolling update completed successfully"
+else
+    echo "❌ Rolling update failed or timed out"
+    kill $PORT_FORWARD_PID 2>/dev/null
+    kill $TEST_PID 2>/dev/null
+    exit 1
+fi
+
+# Wait for availability test to complete
+wait $TEST_PID
+TEST_RESULT=$?
+
+echo ""
+echo "=== Step 5: Verify Rolling Update Completion ==="
+echo ""
+
+echo "Updated pods:"
+kubectl get pods -l app=django-messaging-app,version=blue
+
+echo ""
+echo "Updated pod images:"
+kubectl get pods -l app=django-messaging-app,version=blue -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[0].image}{"\n"}{end}'
+
+echo ""
+echo "Deployment revision history:"
+kubectl rollout history deployment/django-messaging-app-blue
+
+echo ""
+echo "Pod readiness status:"
+kubectl get pods -l app=django-messaging-app,version=blue -o custom-columns=NAME:.metadata.name,READY:.status.conditions[?(@.type==\"Ready\")].status,IMAGE:.spec.containers[0].image
+
+echo ""
+echo "=== Step 6: Final Verification ==="
+echo ""
+
+# Final connectivity test
+echo "Final connectivity test..."
+final_response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8082/)
+if [ "$final_response" = "200" ]; then
+    echo "✅ App is responding after rolling update (HTTP $final_response)"
+else
+    echo "❌ App is not responding after rolling update (HTTP $final_response)"
+fi
+
+# Clean up port-forward
+kill $PORT_FORWARD_PID 2>/dev/null
+
+echo ""
+echo "=== Rolling Update Complete ==="
+echo ""
+
+if [ $TEST_RESULT -eq 0 ] && [ "$final_response" = "200" ]; then
+    echo "🎉 Rolling update completed successfully with no downtime!"
+    echo ""
+    echo "Summary:"
+    echo "- Docker image updated to version 2.0"
+    echo "- Rolling update completed without errors"
+    echo "- No downtime detected during update"
+    echo "- All pods are running the new version"
+else
+    echo "⚠️  Rolling update completed with issues:"
+    [ $TEST_RESULT -ne 0 ] && echo "- Downtime detected during update"
+    [ "$final_response" != "200" ] && echo "- App not responding after update"
+fi
+
+echo ""
+echo "Rollback command (if needed):"
+echo "kubectl rollout undo deployment/django-messaging-app-blue"
+echo ""
+echo "Check rollout status:"
+echo "kubectl rollout status deployment/django-messaging-app-blue"
