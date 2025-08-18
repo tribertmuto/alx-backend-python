@@ -1,0 +1,81 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_REGISTRY = 'docker.io'
+        DOCKER_REPO = 'your-dockerhub-username/messaging-app'
+        DOCKER_CREDENTIALS = credentials('docker-hub-credentials')
+        GITHUB_REPO = 'https://github.com/your-username/alx-backend-python.git'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', 
+                    url: "${GITHUB_REPO}",
+                    credentialsId: 'github-credentials'
+            }
+        }
+        
+        stage('Setup Python Environment') {
+            steps {
+                dir('messaging_app') {
+                    sh 'python3 -m venv venv'
+                    sh '. venv/bin/activate && pip install -r requirements.txt'
+                }
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                dir('messaging_app') {
+                    sh '. venv/bin/activate && python -m pytest chats/tests.py -v --junitxml=test-results.xml --cov=chats --cov-report=xml --cov-report=html'
+                }
+            }
+            post {
+                always {
+                    publishTestResults testResultsPattern: 'messaging_app/test-results.xml'
+                    publishHTML([allowMissing: false, 
+                                alwaysLinkToLastBuild: true, 
+                                keepAll: true, 
+                                reportDir: 'messaging_app/htmlcov', 
+                                reportFiles: 'index.html', 
+                                reportName: 'Coverage Report'])
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                dir('messaging_app') {
+                    script {
+                        def image = docker.build("${DOCKER_REPO}:${BUILD_NUMBER}")
+                        docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-hub-credentials') {
+                            image.push()
+                            image.push('latest')
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                echo 'Deployment stage - ready for production deployment'
+                // Add deployment steps here
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}
