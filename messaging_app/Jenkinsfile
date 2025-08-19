@@ -19,12 +19,22 @@ pipeline {
                     echo "=== Checking GitHub credentials ==="
                     withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
                         echo "✅ GitHub credentials configured for user: ${GITHUB_USER}"
+                        // Verify credentials work by testing GitHub access
+                        sh '''
+                            git config --global credential.helper store
+                            echo "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com" > ~/.git-credentials
+                            git ls-remote https://github.com/tribert/alx-backend-python.git HEAD || echo "❌ GitHub credentials verification failed"
+                        '''
                     }
                     
                     echo "=== Checking Docker credentials ==="
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         echo "✅ Docker Hub credentials configured for user: ${DOCKER_USER}"
                     }
+                    
+                    echo "=== Checking requirements files ==="
+                    sh 'test -f messaging_app/requirements.txt && echo "✅ requirements.txt found" || echo "❌ requirements.txt missing"'
+                    sh 'test -f messaging_app/requirements-dev.txt && echo "✅ requirements-dev.txt found" || echo "❌ requirements-dev.txt missing"'
                 }
             }
         }
@@ -33,13 +43,21 @@ pipeline {
             steps {
                 checkout([
                     $class: 'GitSCM',
-                    branches: [[name: '*/main']],
+                    branches: [[name: '*/main']],  // git branch specification
                     userRemoteConfigs: [[
                         url: "${GITHUB_REPO}",
                         credentialsId: 'github-credentials'
                     ]]
                 ])
                 echo "✅ Successfully pulled messaging app code from GitHub"
+                script {
+                    // Verify git branch and commit info
+                    sh '''
+                        cd messaging_app
+                        git branch --show-current
+                        git log --oneline -1
+                    '''
+                }
             }
         }
         
@@ -50,10 +68,11 @@ pipeline {
                         echo "=== Setting up Python environment ==="
                         python${PYTHON_VERSION} -m venv venv
                         . venv/bin/activate
-                        pip install --upgrade pip
+                        pip3 install --upgrade pip
                         echo "=== Installing requirements ==="
-                        pip install -r requirements.txt
-                        pip install -r requirements-dev.txt
+                        pip3 install -r requirements.txt
+                        pip3 install -r requirements-dev.txt
+                        pip3 install pytest pytest-cov pytest-html
                         echo "✅ Dependencies installed successfully"
                     '''
                 }
