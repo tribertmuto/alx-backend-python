@@ -1,0 +1,167 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_REGISTRY = 'docker.io'
+        DOCKER_REPO = 'tribert/messaging-app'
+        GITHUB_REPO = 'https://github.com/tribert/alx-backend-python.git'
+        PYTHON_VERSION = '3.9'
+    }
+    
+    stages {
+        stage('Pre-flight Checks') {
+            steps {
+                script {
+                    echo "=== Checking Jenkinsfile existence ==="
+                    sh 'ls -la messaging_app/Jenkinsfile'
+                    sh 'test -s messaging_app/Jenkinsfile && echo "✅ Jenkinsfile exists and is not empty" || echo "❌ Jenkinsfile missing or empty"'
+                    
+                    echo "=== Checking GitHub credentials ==="
+                    withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                        echo "✅ GitHub credentials configured for user: ${GITHUB_USER}"
+                    }
+                    
+                    echo "=== Checking Docker credentials ==="
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        echo "✅ Docker Hub credentials configured for user: ${DOCKER_USER}"
+                    }
+                }
+            }
+        }
+        
+        stage('Checkout from GitHub') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        url: "${GITHUB_REPO}",
+                        credentialsId: 'github-credentials'
+                    ]]
+                ])
+                echo "✅ Successfully pulled messaging app code from GitHub"
+            }
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                dir('messaging_app') {
+                    sh '''
+                        echo "=== Setting up Python environment ==="
+                        python${PYTHON_VERSION} -m venv venv
+                        . venv/bin/activate
+                        pip install --upgrade pip
+                        echo "=== Installing requirements ==="
+                        pip install -r requirements.txt
+                        pip install -r requirements-dev.txt
+                        echo "✅ Dependencies installed successfully"
+                    '''
+                }
+            }
+        }
+        
+        stage('Run Tests with pytest') {
+            steps {
+                dir('messaging_app') {
+                    sh '''
+                        echo "=== Running pytest tests ==="
+                        . venv/bin/activate
+                        python -m pytest chats/tests.py -v \
+                            --junitxml=test-results.xml \
+                            --cov=chats \
+                            --cov-report=xml \
+                            --cov-report=html \
+                            --cov-report=term
+                    '''
+                    echo "✅ Tests completed successfully with pytest"
+                }
+            }
+            post {
+                always {
+                    publishTestResults testResultsPattern: 'messaging_app/test-results.xml'
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'messaging_app/htmlcov',
+                        reportFiles: 'index.html',
+                        reportName: 'Coverage Report'
+                    ])
+                    archiveArtifacts artifacts: 'messaging_app/test-results.xml,messaging_app/coverage.xml', fingerprint: true
+                }
+            }
+        }
+        
+        stage('Generate Test Report') {
+            steps {
+                dir('messaging_app') {
+                    sh '''
+                        echo "=== Generating test report ==="
+                        . venv/bin/activate
+                        python -m pytest chats/tests.py --html=report.html --self-contained-html
+                    '''
+                    echo "✅ Test report generated successfully"
+                }
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'messaging_app',
+                        reportFiles: 'report.html',
+                        reportName: 'Pytest Report'
+                    ])
+                }
+            }
+        }
+        
+        stage('Build and Push Docker Image') {
+            when {
+                branch 'main'
+            }
+            steps {
+                dir('messaging_app') {
+                    script {
+                        docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-hub-credentials') {
+                            def image = docker.build("${DOCKER_REPO}:${BUILD_NUMBER}")
+                            image.push()
+                            image.push('latest')
+                        }
+                    }
+                    echo "✅ Docker image built and pushed successfully"
+                }
+            }
+        }
+        
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                echo '✅ Production deployment stage ready'
+                echo 'This stage can be extended with actual deployment scripts'
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo '=== Pipeline completed - cleaning workspace ==='
+            cleanWs()
+        }
+        success {
+            echo '✅ Pipeline completed successfully!'
+            echo '✅ GitHub credentials verified'
+            echo '✅ Jenkinsfile exists and is functional'
+            echo '✅ Code pulled from GitHub'
+            echo '✅ Dependencies installed'
+            echo '✅ Tests run with pytest'
+            echo '✅ Reports generated'
+        }
+        failure {
+            echo '❌ Pipeline failed - check logs for details'
+        }
+    }
+}
