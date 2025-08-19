@@ -3,9 +3,9 @@ pipeline {
     
     environment {
         DOCKER_REGISTRY = 'docker.io'
-        DOCKER_REPO = 'your-dockerhub-username/messaging-app'
+        DOCKER_REPO = 'tribert/messaging-app'
         DOCKER_CREDENTIALS = credentials('docker-hub-credentials')
-        GITHUB_REPO = 'https://github.com/your-username/alx-backend-python.git'
+        GITHUB_REPO = 'https://github.com/tribert/alx-backend-python.git'
     }
     
     stages {
