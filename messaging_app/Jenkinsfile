@@ -60,16 +60,16 @@ pipeline {
             steps {
                 dir('messaging_app') {
                     sh '''
-                        echo "=== Setting up Python environment ==="
-                        python${PYTHON_VERSION} -m venv venv
-                        . venv/bin/activate
-                        pip3 install --upgrade pip
-                        echo "=== Installing requirements ==="
-                        pip3 install -r requirements.txt
-                        pip3 install -r requirements-dev.txt
-                        pip3 install pytest pytest-cov pytest-html
-                        echo "✅ Dependencies installed successfully"
-                    '''
+                       echo "=== Setting up Python environment ==="
+                       python${PYTHON_VERSION} -m venv venv
+                       . venv/bin/activate
+                       pip3 install --upgrade pip
+                       echo "=== Installing requirements ==="
+                       pip3 install -r messaging_app/requirements.txt
+                       pip3 install -r messaging_app/requirements-dev.txt
+                       pip3 install pytest pytest-cov pytest-html
+                       echo "✅ Dependencies installed successfully"
+                   '''
                 }
             }
         }
