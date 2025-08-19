@@ -31,3 +31,8 @@ All functionality for pulling code from GitHub, installing dependencies, running
 ## Files Modified
 - `messaging_app/Jenkinsfile` - Updated with the fixes described above
 - `messaging_app/JENKINSFILE_CHANGES_SUMMARY.md` - This summary document
+
+## Additional Changes Made
+- **Simplified Git Checkout**: Replaced complex GitSCM configuration with simpler `git branch: 'main'` syntax
+- **Maintained Credential Security**: GitHub credentials are still properly configured using the `github-credentials` credential ID
+- **Preserved All Functionality**: All other stages and functionality remain unchanged

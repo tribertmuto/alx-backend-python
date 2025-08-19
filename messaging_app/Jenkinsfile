@@ -41,14 +41,9 @@ pipeline {
         
         stage('Checkout from GitHub') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],  // git branch specification
-                    userRemoteConfigs: [[
-                        url: "${GITHUB_REPO}",
-                        credentialsId: 'github-credentials'
-                    ]]
-                ])
+                git branch: 'main',
+                    url: "${GITHUB_REPO}",
+                    credentialsId: 'github-credentials'
                 echo "✅ Successfully pulled messaging app code from GitHub"
                 script {
                     // Verify git branch and commit info
