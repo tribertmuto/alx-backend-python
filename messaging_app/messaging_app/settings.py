@@ -72,6 +72,11 @@ WSGI_APPLICATION = 'messaging_app.wsgi.application'
 
 DATABASES = {
     'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+} if os.environ.get('USE_SQLITE', 'true').lower() == 'true' else {
+    'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': os.environ.get('MYSQL_DATABASE', 'messaging_db'),
         'USER': os.environ.get('MYSQL_USER', 'messaging_user'),
