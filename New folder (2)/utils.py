@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Generic utilities for github org client."""
+"""Generic utilities for github org client.
+"""
 import requests
 from functools import wraps
 from typing import (
@@ -35,6 +36,7 @@ def access_nested_map(nested_map: Mapping, path: Sequence) -> Any:
         if not isinstance(nested_map, Mapping):
             raise KeyError(key)
         nested_map = nested_map[key]
+
     return nested_map
 
 
